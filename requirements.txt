@@ -1,9 +1,0 @@
---prefer-binary
-Flask==3.0.2
-Werkzeug==3.0.1
-numpy==2.2.0
-opencv-python==4.9.0.80
-scipy==1.13.1 --only-binary=:all:
-requests==2.31.0
-ffmpeg-python==0.2.0
-
