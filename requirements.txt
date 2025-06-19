@@ -1,0 +1,10 @@
+--prefer-binary
+Flask
+Werkzeug
+numpy
+opencv-python
+scipy --only-binary=:all:
+requests
+gunicorn
+ffmpeg-python
+
