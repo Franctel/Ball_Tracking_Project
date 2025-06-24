@@ -319,7 +319,6 @@ const uploadBtn = document.getElementById('uploadBtn');
 const videoUrlInput = document.getElementById('videoUrl');
 const urlUploadBtn = document.getElementById('urlUploadBtn');
 const videoPlayer = document.getElementById('videoPlayer');
-const messageDiv = document.getElementById('message');
 videoPlayer.onloadeddata = function () {
     fetch("/extract_assets", {
         method: 'POST'
