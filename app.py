@@ -17,7 +17,7 @@ index_template = """
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ball Tracker Web</title>
+<title>Ball Tracker</title>
 <style>
     body {
         background-color: #1c1c1c;
@@ -230,7 +230,7 @@ index_template = """
 </style>
 </head>
 <body>
-<header>Ball Tracker Web</header>
+<header>Ball Tracker</header>
 
 <section id="uploadSection">
     <label for="videoFile">Select Video (MP4):</label>
