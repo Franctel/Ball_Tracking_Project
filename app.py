@@ -158,7 +158,7 @@ index_template = """
     }
     canvas {
         border-radius: 10px;
-        max-width: none;
+        max-width: 100%;
         height: auto;
         display: block;
     }
@@ -168,9 +168,10 @@ index_template = """
         user-select: none;
     }
     #processedFrame {
-        width: auto;
-        height: auto;
-        max-width: none;
+        max-width: 100%;
+        border-radius: 10px;
+        margin-top: 10px;
+        border: 3px solid #00d1b2cc;
     }
     #processedControls {
         margin-top: 10px;
@@ -945,10 +946,11 @@ for folder in [app.config['UPLOAD_FOLDER'], app.config['FRAME_FOLDER'], app.conf
 def extract_frames(video_path):
     global frame_count
 
-    # Clear previous frames
+    # Ensure frame folder exists
     if not os.path.exists(app.config['FRAME_FOLDER']):
         os.makedirs(app.config['FRAME_FOLDER'])
 
+    # Clear old frames
     for f in os.listdir(app.config['FRAME_FOLDER']):
         os.remove(os.path.join(app.config['FRAME_FOLDER'], f))
 
@@ -962,21 +964,7 @@ def extract_frames(video_path):
         if not ret or frame is None:
             break
 
-        # ✅ Resize or crop carefully (example: crop central width if too wide)
-        if frame.shape[1] > 2400:
-            frame = frame[:, 1200:frame.shape[1] - 1200]
-        elif frame.shape[1] > 1000:
-            # Crop 25% margins for wide HD formats
-            margin = frame.shape[1] // 4
-            frame = frame[:, margin:-margin]
-
-        # ✅ Optional: scale down to speed up Render
-        height_limit = 800
-        if frame.shape[0] > height_limit:
-            scale = height_limit / frame.shape[0]
-            frame = cv2.resize(frame, (int(frame.shape[1] * scale), height_limit))
-
-        # ✅ Save the frame
+        # ✅ No resizing, no cropping — preserve original frame
         output_path = os.path.join(app.config['FRAME_FOLDER'], f"{cnt}.png")
         success = cv2.imwrite(output_path, frame)
         if not success:
@@ -985,11 +973,8 @@ def extract_frames(video_path):
         cnt += 1
 
     cap.release()
-
-    # ✅ Update and return count
     frame_count = cnt
     return frame_count
-
 
 def generate_processed_video():
     frame_files = sorted([f for f in os.listdir(app.config['PROCESSED_FOLDER']) if f.endswith('.jpg')],
