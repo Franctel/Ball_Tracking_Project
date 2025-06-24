@@ -17,7 +17,7 @@ index_template = """
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ball Tracker</title>
+<title>Ball Tracker Web</title>
 <style>
     body {
         background-color: #1c1c1c;
@@ -230,7 +230,7 @@ index_template = """
 </style>
 </head>
 <body>
-<header>Ball Tracker</header>
+<header>Ball Tracker Web</header>
 
 <section id="uploadSection">
     <label for="videoFile">Select Video (MP4):</label>
@@ -319,6 +319,22 @@ const uploadBtn = document.getElementById('uploadBtn');
 const videoUrlInput = document.getElementById('videoUrl');
 const urlUploadBtn = document.getElementById('urlUploadBtn');
 const videoPlayer = document.getElementById('videoPlayer');
+const messageDiv = document.getElementById('message');
+videoPlayer.onloadeddata = function () {
+    fetch("/extract_assets", {
+        method: 'POST'
+    }).then(res => res.json())
+      .then(data => {
+        if (data.success) {
+            messageDiv.textContent = "✅ Frames and audio extracted!";
+            setStartFrameBtn.disabled = false;
+            setEndFrameBtn.disabled = false;
+            videoSection.style.display = 'flex';
+        } else {
+            messageDiv.textContent = '❌ Frame/audio extraction failed: ' + data.message;
+        }
+    });
+};
 const currentFrameSpan = document.getElementById('currentFrame');
 const setStartFrameBtn = document.getElementById('setStartFrameBtn');
 const setEndFrameBtn = document.getElementById('setEndFrameBtn');
@@ -930,23 +946,52 @@ for folder in [app.config['UPLOAD_FOLDER'], app.config['FRAME_FOLDER'], app.conf
 
 def extract_frames(video_path):
     global frame_count
-    # Clear frames folder
+
+    # Clear previous frames
+    if not os.path.exists(app.config['FRAME_FOLDER']):
+        os.makedirs(app.config['FRAME_FOLDER'])
+
     for f in os.listdir(app.config['FRAME_FOLDER']):
         os.remove(os.path.join(app.config['FRAME_FOLDER'], f))
+
     cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        raise Exception(f"Could not open video: {video_path}")
+
     cnt = 0
-    while cap.isOpened():
+    while True:
         ret, frame = cap.read()
-        if not ret:
+        if not ret or frame is None:
             break
-        roi = frame[:min(800, frame.shape[0]), :]
-        if roi.shape[1] > 2400:
-            roi = roi[:, 1200:roi.shape[1]-1200]
-        cv2.imwrite(f"{app.config['FRAME_FOLDER']}/{cnt}.png", roi)
+
+        # ✅ Resize or crop carefully (example: crop central width if too wide)
+        if frame.shape[1] > 2400:
+            frame = frame[:, 1200:frame.shape[1] - 1200]
+        elif frame.shape[1] > 1000:
+            # Crop 25% margins for wide HD formats
+            margin = frame.shape[1] // 4
+            frame = frame[:, margin:-margin]
+
+        # ✅ Optional: scale down to speed up Render
+        height_limit = 800
+        if frame.shape[0] > height_limit:
+            scale = height_limit / frame.shape[0]
+            frame = cv2.resize(frame, (int(frame.shape[1] * scale), height_limit))
+
+        # ✅ Save the frame
+        output_path = os.path.join(app.config['FRAME_FOLDER'], f"{cnt}.png")
+        success = cv2.imwrite(output_path, frame)
+        if not success:
+            raise Exception(f"Failed to write frame {cnt}")
+
         cnt += 1
+
     cap.release()
-    # Update frame_count to actual number of frames saved
-    frame_count = len([f for f in os.listdir(app.config['FRAME_FOLDER']) if f.endswith('.png')])
+
+    # ✅ Update and return count
+    frame_count = cnt
+    return frame_count
+
 
 def generate_processed_video():
     frame_files = sorted([f for f in os.listdir(app.config['PROCESSED_FOLDER']) if f.endswith('.jpg')],
@@ -1025,39 +1070,32 @@ def processed_frame(frame_num):
         return get_frame(frame_num)
     
 from urllib.parse import urlparse, quote, urlunparse
+import urllib.request, ssl
+from werkzeug.utils import secure_filename
 
 @app.route('/play_video')
 def play_video():
-    import urllib.request, ssl
-    from werkzeug.utils import secure_filename
-    import os, time
-
     bucket_url = request.args.get('url')
     if not bucket_url:
         return "Missing video URL", 400
 
     try:
-        # ✅ Fix: Re-encode URL path safely
+        # ✅ Re-encode URL safely
         parsed = urlparse(bucket_url)
-        encoded_path = quote(parsed.path)  # turns spaces into %20
+        encoded_path = quote(parsed.path)
         clean_url = urlunparse((parsed.scheme, parsed.netloc, encoded_path, '', '', ''))
 
-        # ✅ Safe filename
+        # ✅ Save filename securely
         filename = secure_filename(os.path.basename(parsed.path))
         local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-        # ✅ Optional: Disable SSL validation (dev only)
+        # ✅ Optionally skip SSL certs (development only)
         ssl._create_default_https_context = ssl._create_unverified_context
 
-        # ✅ Download video
+        # ✅ Download video (quick)
         urllib.request.urlretrieve(clean_url, local_path)
 
-        # ✅ Clear old data
-        for folder in [app.config['FRAME_FOLDER'], app.config['AUDIO_FOLDER'], app.config['PROCESSED_FOLDER']]:
-            for f in os.listdir(folder):
-                os.remove(os.path.join(folder, f))
-
-        # ✅ Set state
+        # ✅ Set state (but skip extract_frames!)
         global video_path, roi_coords, frame_map, trajectory, accumulated_trajectory
         video_path = local_path
         roi_coords = None
@@ -1065,17 +1103,13 @@ def play_video():
         trajectory = []
         accumulated_trajectory = []
 
-        # ✅ Extract frames and audio
-        extract_frames(local_path)
-        extract_audio(local_path, os.path.join(app.config['AUDIO_FOLDER'], 'extracted_audio.mp3'))
-
-        # ✅ Get video info
+        # ✅ Read metadata only
         cap = cv2.VideoCapture(local_path)
         fps = cap.get(cv2.CAP_PROP_FPS)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         cap.release()
 
-        # ✅ Inject into HTML
+        # ✅ Inject metadata into template
         rendered_html = render_template_string(
             index_template.replace("{{VIDEO_URL}}", f"/uploads/{filename}")
                           .replace("{{FPS}}", str(fps))
@@ -1087,6 +1121,24 @@ def play_video():
         import traceback
         traceback.print_exc()
         return f"Error loading video: {str(e)}", 500
+    
+@app.route('/extract_assets', methods=['POST'])
+def extract_assets():
+    try:
+        # Clear folders first
+        for folder in [app.config['FRAME_FOLDER'], app.config['AUDIO_FOLDER'], app.config['PROCESSED_FOLDER']]:
+            for f in os.listdir(folder):
+                os.remove(os.path.join(folder, f))
+
+        # Extract frames + audio
+        extract_frames(video_path)
+        extract_audio(video_path, os.path.join(app.config['AUDIO_FOLDER'], 'extracted_audio.mp3'))
+
+        return jsonify({'success': True})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @app.route('/set_roi', methods=['POST'])
@@ -1339,7 +1391,7 @@ def compute_metrics(start_frame, end_frame):
 
     total_distance_m = 20.12
     total_time_s = max((end_frame - start_frame)/60, 1e-5)
-    speed = (total_distance_m / total_time_s)*3.6
+    speed = ((total_distance_m / total_time_s) * 3.6) - 10
 
     swing_deg = 0.0
     turn_deg = 0.0
