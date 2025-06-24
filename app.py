@@ -158,7 +158,7 @@ index_template = """
     }
     canvas {
         border-radius: 10px;
-        max-width: 100%;
+        max-width: none;
         height: auto;
         display: block;
     }
@@ -168,10 +168,9 @@ index_template = """
         user-select: none;
     }
     #processedFrame {
-        max-width: 100%;
-        border-radius: 10px;
-        margin-top: 10px;
-        border: 3px solid #00d1b2cc;
+        width: auto;
+        height: auto;
+        max-width: none;
     }
     #processedControls {
         margin-top: 10px;
