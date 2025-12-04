@@ -1274,14 +1274,18 @@ def generate_session_radar_chart(
     if run_filter is None or str(run_filter).lower() == "all":
         run_set = None
     else:
-        if isinstance(run_filter, (list, tuple, set)):
-            run_set = set(int(x) for x in run_filter)
-        else:
-            s = str(run_filter)
-            if "," in s:
-                run_set = set(int(x.strip()) for x in s.split(",") if x.strip())
+        try:
+            if isinstance(run_filter, (list, tuple, set)):
+                run_set = set(int(x) for x in run_filter)
             else:
-                run_set = {int(s.strip())}
+                s = str(run_filter)
+                if "," in s:
+                    run_set = set(int(x.strip()) for x in s.split(",") if x.strip())
+                else:
+                    run_set = {int(s.strip())}
+        except (ValueError, TypeError):
+            # If conversion fails, treat as no filter
+            run_set = None
 
     # ------------------------------
     # Extract Day / Session columns
@@ -1289,9 +1293,9 @@ def generate_session_radar_chart(
     if "Day" not in df.columns or "SessionNo" not in df.columns:
         wide_col = "scrM_IsWideBall" if "scrM_IsWideBall" in df.columns else None
         noball_col = "scrM_IsNoBall" if "scrM_IsNoBall" in df.columns else None
-        is_wide = df[wide_col].fillna(0).astype(int) if wide_col else np.zeros(len(df))
-        is_noball = df[noball_col].fillna(0).astype(int) if noball_col else np.zeros(len(df))
-        df["__is_legal"] = 1 - (np.array(is_wide) | np.array(is_noball))
+        is_wide_arr = np.array(df[wide_col].fillna(0).astype(int)) if wide_col else np.zeros(len(df))
+        is_noball_arr = np.array(df[noball_col].fillna(0).astype(int)) if noball_col else np.zeros(len(df))
+        df["__is_legal"] = 1 - (is_wide_arr | is_noball_arr)
 
         sort_cols = [c for c in ["scrM_InningNo", "scrM_OverNo", "scrM_DelNo"] if c in df.columns]
         if sort_cols:
@@ -2240,6 +2244,11 @@ def team_radar():
         }), 400
 
 
+# Constants for sample data generation
+SAMPLE_DATA_SEED_OUR_TEAM = 42
+SAMPLE_DATA_SEED_OPPONENT_TEAM = 84
+SAMPLE_DATA_BALL_COUNT = 100
+
 def create_sample_ball_by_ball_data(team_type, run_filters, bowler_filters):
     """
     Create sample ball-by-ball data for demonstration.
@@ -2250,13 +2259,14 @@ def create_sample_ball_by_ball_data(team_type, run_filters, bowler_filters):
     
     # Generate random sample data with filters applied
     data_rows = []
-    np.random.seed(42 if team_type == 'our' else 84)  # Different seed for opponent
+    seed = SAMPLE_DATA_SEED_OUR_TEAM if team_type == 'our' else SAMPLE_DATA_SEED_OPPONENT_TEAM
+    np.random.seed(seed)
     
     # Only generate data if we have filters
     if not run_filters:
         return pd.DataFrame()
     
-    for _ in range(100):  # Generate 100 sample balls
+    for _ in range(SAMPLE_DATA_BALL_COUNT):
         area = np.random.choice(areas)
         runs = int(np.random.choice(run_filters))
         
