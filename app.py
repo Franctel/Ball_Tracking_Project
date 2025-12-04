@@ -11,6 +11,14 @@ import urllib.request
 from urllib.parse import unquote
 import ssl
 
+# Import utility functions for radar charts
+from utils import (
+    generate_team_wagon_radar,
+    generate_session_radar_chart,
+    map_bowling_type_radar,
+    create_sample_ball_by_ball_data
+)
+
 index_template = """
 <!DOCTYPE html>
 <html lang="en">
@@ -232,6 +240,15 @@ index_template = """
 <body>
 <header>Ball Tracker</header>
 
+<div style="display: flex; justify-content: center; gap: 20px; margin: 10px 0;">
+    <button id="navBallTrackerBtn" style="padding: 10px 20px; border-radius: 6px; border: none; font-weight: 600; font-size: 1rem; background: #015151; color: #80fff7; cursor: pointer;">
+        Ball Tracker
+    </button>
+    <button id="navTeamAnalysisBtn" style="padding: 10px 20px; border-radius: 6px; border: none; font-weight: 600; font-size: 1rem; background: #015151; color: #80fff7; cursor: pointer;">
+        Team Analysis
+    </button>
+</div>
+
 <section id="uploadSection">
     <label for="videoFile">Select Video (MP4):</label>
     <input type="file" id="videoFile" accept="video/mp4" />
@@ -309,6 +326,106 @@ index_template = """
     </div>
     <div id="metrics"></div>
     <input type="range" id="frameSlider" min="0" max="0" value="0" style="margin-top:10px;" />
+</section>
+
+<section id="teamAnalysisSection" style="display: none; background: #2a2a2a; margin: 10px; padding: 15px 20px; border-radius: 10px; box-shadow: 0 0 15px #00555588; width: 90%; max-width: 1400px;">
+    <h3 style="text-align: center; color: #00d1b2;">Team Analysis - Areawise Wagon Wheel</h3>
+    
+    <div style="display: flex; justify-content: space-around; margin: 20px 0; gap: 40px;">
+        <!-- Our Team Radar -->
+        <div style="flex: 1; text-align: center;">
+            <h4 style="color: #00d1b2;">Our Team</h4>
+            <img id="ourTeamRadar" src="" alt="Our Team Radar" style="max-width: 100%; height: auto; background: transparent;" />
+            
+            <!-- Filters for Our Team -->
+            <div style="margin-top: 15px; text-align: left; padding: 10px; background: #1c1c1c; border-radius: 8px;">
+                <div style="margin-bottom: 10px;">
+                    <strong style="color: #00d1b2;">Filter by Runs:</strong>
+                    <div style="margin-left: 10px; margin-top: 5px;">
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="ourTeamRunFilter" value="1" checked /> 1s
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="ourTeamRunFilter" value="2" checked /> 2s
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="ourTeamRunFilter" value="3" checked /> 3s
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="ourTeamRunFilter" value="4" checked /> 4s
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="ourTeamRunFilter" value="6" checked /> 6s
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <strong style="color: #00d1b2;">Filter by Bowler Type:</strong>
+                    <div style="margin-left: 10px; margin-top: 5px;">
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="ourTeamBowlerFilter" value="Pace" checked /> Pace
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="ourTeamBowlerFilter" value="Spin" checked /> Spin
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="ourTeamBowlerFilter" value="Other" checked /> Other
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="applyOurTeamFilters" style="margin-top: 10px; padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; background: #015151; color: #80fff7; cursor: pointer;">Apply Filters</button>
+            </div>
+        </div>
+        
+        <!-- Opponent Team Radar -->
+        <div style="flex: 1; text-align: center;">
+            <h4 style="color: #00d1b2;">Opponent Team</h4>
+            <img id="opponentTeamRadar" src="" alt="Opponent Team Radar" style="max-width: 100%; height: auto; background: transparent;" />
+            
+            <!-- Filters for Opponent Team -->
+            <div style="margin-top: 15px; text-align: left; padding: 10px; background: #1c1c1c; border-radius: 8px;">
+                <div style="margin-bottom: 10px;">
+                    <strong style="color: #00d1b2;">Filter by Runs:</strong>
+                    <div style="margin-left: 10px; margin-top: 5px;">
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="opponentTeamRunFilter" value="1" checked /> 1s
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="opponentTeamRunFilter" value="2" checked /> 2s
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="opponentTeamRunFilter" value="3" checked /> 3s
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="opponentTeamRunFilter" value="4" checked /> 4s
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="opponentTeamRunFilter" value="6" checked /> 6s
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 10px;">
+                    <strong style="color: #00d1b2;">Filter by Bowler Type:</strong>
+                    <div style="margin-left: 10px; margin-top: 5px;">
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="opponentTeamBowlerFilter" value="Pace" checked /> Pace
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="opponentTeamBowlerFilter" value="Spin" checked /> Spin
+                        </label>
+                        <label style="margin-right: 15px; cursor: pointer;">
+                            <input type="checkbox" class="opponentTeamBowlerFilter" value="Other" checked /> Other
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="applyOpponentTeamFilters" style="margin-top: 10px; padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; background: #015151; color: #80fff7; cursor: pointer;">Apply Filters</button>
+            </div>
+        </div>
+    </div>
 </section>
 
 <div id="message"></div>
@@ -907,6 +1024,115 @@ window.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
+// Navigation between sections
+const navBallTrackerBtn = document.getElementById('navBallTrackerBtn');
+const navTeamAnalysisBtn = document.getElementById('navTeamAnalysisBtn');
+const uploadSection = document.getElementById('uploadSection');
+const urlSection = document.getElementById('urlSection');
+
+navBallTrackerBtn.addEventListener('click', () => {
+    // Show ball tracker sections
+    uploadSection.style.display = 'block';
+    urlSection.style.display = 'block';
+    if (videoSection) videoSection.style.display = videoSection.dataset.visible === 'true' ? 'flex' : 'none';
+    if (roiSection) roiSection.style.display = roiSection.dataset.visible === 'true' ? 'block' : 'none';
+    if (processedSection) processedSection.style.display = processedSection.dataset.visible === 'true' ? 'flex' : 'none';
+    
+    // Hide team analysis
+    teamAnalysisSection.style.display = 'none';
+    
+    // Update button styles
+    navBallTrackerBtn.style.background = '#00e5ca';
+    navBallTrackerBtn.style.color = '#003330';
+    navTeamAnalysisBtn.style.background = '#015151';
+    navTeamAnalysisBtn.style.color = '#80fff7';
+});
+
+navTeamAnalysisBtn.addEventListener('click', () => {
+    // Hide ball tracker sections
+    uploadSection.style.display = 'none';
+    urlSection.style.display = 'none';
+    if (videoSection) {
+        videoSection.dataset.visible = videoSection.style.display !== 'none' ? 'true' : 'false';
+        videoSection.style.display = 'none';
+    }
+    if (roiSection) {
+        roiSection.dataset.visible = roiSection.style.display !== 'none' ? 'true' : 'false';
+        roiSection.style.display = 'none';
+    }
+    if (processedSection) {
+        processedSection.dataset.visible = processedSection.style.display !== 'none' ? 'true' : 'false';
+        processedSection.style.display = 'none';
+    }
+    
+    // Show team analysis and load charts
+    teamAnalysisSection.style.display = 'block';
+    loadTeamRadarCharts('our');
+    loadTeamRadarCharts('opponent');
+    
+    // Update button styles
+    navTeamAnalysisBtn.style.background = '#00e5ca';
+    navTeamAnalysisBtn.style.color = '#003330';
+    navBallTrackerBtn.style.background = '#015151';
+    navBallTrackerBtn.style.color = '#80fff7';
+});
+
+// Team Analysis functionality
+const teamAnalysisSection = document.getElementById('teamAnalysisSection');
+const ourTeamRadar = document.getElementById('ourTeamRadar');
+const opponentTeamRadar = document.getElementById('opponentTeamRadar');
+const applyOurTeamFiltersBtn = document.getElementById('applyOurTeamFilters');
+const applyOpponentTeamFiltersBtn = document.getElementById('applyOpponentTeamFilters');
+
+// Function to get selected filters
+function getSelectedFilters(filterClass) {
+    const checkboxes = document.querySelectorAll(`.${filterClass}:checked`);
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Function to load radar charts
+function loadTeamRadarCharts(teamType) {
+    const runFilters = getSelectedFilters(`${teamType}TeamRunFilter`);
+    const bowlerFilters = getSelectedFilters(`${teamType}TeamBowlerFilter`);
+    
+    fetch('/api/team_radar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            team_type: teamType,
+            run_filters: runFilters,
+            bowler_filters: bowlerFilters
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (teamType === 'our') {
+                ourTeamRadar.src = data.radar_image;
+            } else {
+                opponentTeamRadar.src = data.radar_image;
+            }
+        } else {
+            console.error('Failed to load radar:', data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error loading radar:', err);
+    });
+}
+
+// Apply filters for our team
+applyOurTeamFiltersBtn.addEventListener('click', () => {
+    loadTeamRadarCharts('our');
+});
+
+// Apply filters for opponent team
+applyOpponentTeamFiltersBtn.addEventListener('click', () => {
+    loadTeamRadarCharts('opponent');
+});
+</script>
+
+<script>
 const fps = parseFloat("{{FPS}}");
 const frameCount = parseInt("{{FRAME_COUNT}}");
 
@@ -1441,6 +1667,57 @@ def run_analysis():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'message': str(e)}), 400
+
+
+@app.route('/api/team_radar', methods=['POST'])
+def team_radar():
+    """
+    API endpoint to generate team wagon radar charts with filters.
+    Expects JSON: {team_type: 'our'|'opponent', run_filters: [1,2,3,4,6], bowler_filters: ['Pace','Spin','Other']}
+    """
+    try:
+        data = request.json
+        team_type = data.get('team_type', 'our')
+        run_filters = data.get('run_filters', ['1', '2', '3', '4', '6'])
+        bowler_filters = data.get('bowler_filters', ['Pace', 'Spin', 'Other'])
+        
+        # Convert run_filters to integers
+        run_filters = [int(r) for r in run_filters]
+        
+        # Create sample data for demonstration
+        # In a real application, this would fetch from database
+        sample_data = create_sample_ball_by_ball_data(team_type, run_filters, bowler_filters)
+        
+        # Generate radar chart
+        if sample_data is None or sample_data.empty:
+            # Return empty chart
+            radar_image = generate_team_wagon_radar(
+                team_name=f"{team_type.capitalize()} Team",
+                df=pd.DataFrame(),
+                mode="batting",
+                size_inches=8,
+                dpi=260
+            )
+        else:
+            radar_image = generate_team_wagon_radar(
+                team_name=f"{team_type.capitalize()} Team",
+                df=sample_data,
+                mode="batting",
+                size_inches=8,
+                dpi=260
+            )
+        
+        return jsonify({
+            'success': True,
+            'radar_image': radar_image
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
 
 
 # if __name__ == '__main__':
