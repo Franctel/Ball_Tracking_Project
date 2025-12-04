@@ -238,6 +238,15 @@ index_template = """
 <body>
 <header>Ball Tracker</header>
 
+<div style="display: flex; justify-content: center; gap: 20px; margin: 10px 0;">
+    <button id="navBallTrackerBtn" style="padding: 10px 20px; border-radius: 6px; border: none; font-weight: 600; font-size: 1rem; background: #015151; color: #80fff7; cursor: pointer;">
+        Ball Tracker
+    </button>
+    <button id="navTeamAnalysisBtn" style="padding: 10px 20px; border-radius: 6px; border: none; font-weight: 600; font-size: 1rem; background: #015151; color: #80fff7; cursor: pointer;">
+        Team Analysis
+    </button>
+</div>
+
 <section id="uploadSection">
     <label for="videoFile">Select Video (MP4):</label>
     <input type="file" id="videoFile" accept="video/mp4" />
@@ -414,10 +423,6 @@ index_template = """
                 <button id="applyOpponentTeamFilters" style="margin-top: 10px; padding: 8px 16px; border-radius: 6px; border: none; font-weight: 600; background: #015151; color: #80fff7; cursor: pointer;">Apply Filters</button>
             </div>
         </div>
-    </div>
-    
-    <div style="text-align: center; margin-top: 20px;">
-        <button id="showTeamAnalysisBtn" style="padding: 10px 20px; border-radius: 6px; border: none; font-weight: 600; font-size: 1rem; background: #015151; color: #80fff7; cursor: pointer;">Load Team Analysis</button>
     </div>
 </section>
 
@@ -1017,20 +1022,65 @@ window.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
+// Navigation between sections
+const navBallTrackerBtn = document.getElementById('navBallTrackerBtn');
+const navTeamAnalysisBtn = document.getElementById('navTeamAnalysisBtn');
+const uploadSection = document.getElementById('uploadSection');
+const urlSection = document.getElementById('urlSection');
+
+navBallTrackerBtn.addEventListener('click', () => {
+    // Show ball tracker sections
+    uploadSection.style.display = 'block';
+    urlSection.style.display = 'block';
+    if (videoSection) videoSection.style.display = videoSection.dataset.visible === 'true' ? 'flex' : 'none';
+    if (roiSection) roiSection.style.display = roiSection.dataset.visible === 'true' ? 'block' : 'none';
+    if (processedSection) processedSection.style.display = processedSection.dataset.visible === 'true' ? 'flex' : 'none';
+    
+    // Hide team analysis
+    teamAnalysisSection.style.display = 'none';
+    
+    // Update button styles
+    navBallTrackerBtn.style.background = '#00e5ca';
+    navBallTrackerBtn.style.color = '#003330';
+    navTeamAnalysisBtn.style.background = '#015151';
+    navTeamAnalysisBtn.style.color = '#80fff7';
+});
+
+navTeamAnalysisBtn.addEventListener('click', () => {
+    // Hide ball tracker sections
+    uploadSection.style.display = 'none';
+    urlSection.style.display = 'none';
+    if (videoSection) {
+        videoSection.dataset.visible = videoSection.style.display !== 'none' ? 'true' : 'false';
+        videoSection.style.display = 'none';
+    }
+    if (roiSection) {
+        roiSection.dataset.visible = roiSection.style.display !== 'none' ? 'true' : 'false';
+        roiSection.style.display = 'none';
+    }
+    if (processedSection) {
+        processedSection.dataset.visible = processedSection.style.display !== 'none' ? 'true' : 'false';
+        processedSection.style.display = 'none';
+    }
+    
+    // Show team analysis and load charts
+    teamAnalysisSection.style.display = 'block';
+    loadTeamRadarCharts('our');
+    loadTeamRadarCharts('opponent');
+    
+    // Update button styles
+    navTeamAnalysisBtn.style.background = '#00e5ca';
+    navTeamAnalysisBtn.style.color = '#003330';
+    navBallTrackerBtn.style.background = '#015151';
+    navBallTrackerBtn.style.color = '#80fff7';
+});
+
 // Team Analysis functionality
 const teamAnalysisSection = document.getElementById('teamAnalysisSection');
-const showTeamAnalysisBtn = document.getElementById('showTeamAnalysisBtn');
 const ourTeamRadar = document.getElementById('ourTeamRadar');
 const opponentTeamRadar = document.getElementById('opponentTeamRadar');
 const applyOurTeamFiltersBtn = document.getElementById('applyOurTeamFilters');
 const applyOpponentTeamFiltersBtn = document.getElementById('applyOpponentTeamFilters');
-
-// Show team analysis section
-showTeamAnalysisBtn.addEventListener('click', () => {
-    teamAnalysisSection.style.display = 'block';
-    loadTeamRadarCharts('our');
-    loadTeamRadarCharts('opponent');
-});
 
 // Function to get selected filters
 function getSelectedFilters(filterClass) {
