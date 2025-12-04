@@ -1263,7 +1263,7 @@ def generate_session_radar_chart(
 ):
     """
     Radar-style session wagon wheel chart with optional run filtering.
-    BIG SIZE VERSION (Option A: 600x600).
+    Generates 8x8 inch chart at 260 dpi (approximately 2080x2080 pixels).
     """
 
     df = ball_by_ball_df.copy()
@@ -1281,7 +1281,7 @@ def generate_session_radar_chart(
             if "," in s:
                 run_set = set(int(x.strip()) for x in s.split(",") if x.strip())
             else:
-                run_set = set([int(s.strip())])
+                run_set = {int(s.strip())}
 
     # ------------------------------
     # Extract Day / Session columns
@@ -1289,8 +1289,8 @@ def generate_session_radar_chart(
     if "Day" not in df.columns or "SessionNo" not in df.columns:
         wide_col = "scrM_IsWideBall" if "scrM_IsWideBall" in df.columns else None
         noball_col = "scrM_IsNoBall" if "scrM_IsNoBall" in df.columns else None
-        is_wide = df[wide_col].fillna(0).astype(int) if wide_col else 0
-        is_noball = df[noball_col].fillna(0).astype(int) if noball_col else 0
+        is_wide = df[wide_col].fillna(0).astype(int) if wide_col else np.zeros(len(df))
+        is_noball = df[noball_col].fillna(0).astype(int) if noball_col else np.zeros(len(df))
         df["__is_legal"] = 1 - (np.array(is_wide) | np.array(is_noball))
 
         sort_cols = [c for c in ["scrM_InningNo", "scrM_OverNo", "scrM_DelNo"] if c in df.columns]
@@ -2252,25 +2252,27 @@ def create_sample_ball_by_ball_data(team_type, run_filters, bowler_filters):
     data_rows = []
     np.random.seed(42 if team_type == 'our' else 84)  # Different seed for opponent
     
+    # Only generate data if we have filters
+    if not run_filters:
+        return pd.DataFrame()
+    
     for _ in range(100):  # Generate 100 sample balls
         area = np.random.choice(areas)
-        runs = int(np.random.choice(run_filters)) if run_filters else 0
+        runs = int(np.random.choice(run_filters))
         
-        # Only include if runs match filter
-        if runs in run_filters:
-            row = {
-                'scrM_WagonArea_zName': area,
-                'scrM_BatsmanRuns': runs,
-                'scrM_IsBoundry': 1 if runs == 4 else 0,
-                'scrM_IsSixer': 1 if runs == 6 else 0,
-                'scrM_tmMIdBattingName': f"{team_type.capitalize()} Team",
-                'scrM_tmMIdBowlingName': "Opponent Team" if team_type == 'our' else "Our Team",
-                'scrM_BowlerSkill': np.random.choice(['Pace', 'Spin', 'Other'])
-            }
-            
-            # Apply bowler filter
-            if row['scrM_BowlerSkill'] in bowler_filters:
-                data_rows.append(row)
+        row = {
+            'scrM_WagonArea_zName': area,
+            'scrM_BatsmanRuns': runs,
+            'scrM_IsBoundry': 1 if runs == 4 else 0,
+            'scrM_IsSixer': 1 if runs == 6 else 0,
+            'scrM_tmMIdBattingName': f"{team_type.capitalize()} Team",
+            'scrM_tmMIdBowlingName': "Opponent Team" if team_type == 'our' else "Our Team",
+            'scrM_BowlerSkill': np.random.choice(['Pace', 'Spin', 'Other'])
+        }
+        
+        # Apply bowler filter
+        if row['scrM_BowlerSkill'] in bowler_filters:
+            data_rows.append(row)
     
     if not data_rows:
         return pd.DataFrame()
