@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Analysis - Areawise Wagon Wheel</title>
+    <style>
+        body {
+            background-color: #1c1c1c;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        #teamAnalysisSection {
+            background: #2a2a2a;
+            margin: 10px auto;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #00555588;
+            width: 90%;
+            max-width: 1400px;
+        }
+        
+        h3 {
+            text-align: center;
+            color: #00d1b2;
+        }
+        
+        .radar-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            gap: 40px;
+        }
+        
+        .team-panel {
+            flex: 1;
+            text-align: center;
+        }
+        
+        h4 {
+            color: #00d1b2;
+        }
+        
+        .radar-img {
+            max-width: 100%;
+            height: auto;
+            background: transparent;
+        }
+        
+        .filter-panel {
+            margin-top: 15px;
+            text-align: left;
+            padding: 10px;
+            background: #1c1c1c;
+            border-radius: 8px;
+        }
+        
+        .filter-section {
+            margin-bottom: 10px;
+        }
+        
+        .filter-title {
+            color: #00d1b2;
+            font-weight: bold;
+        }
+        
+        .filter-options {
+            margin-left: 10px;
+            margin-top: 5px;
+        }
+        
+        label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        
+        button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            background: #015151;
+            color: #80fff7;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: #00e5ca;
+            color: #003330;
+        }
+    </style>
+</head>
+<body>
+    <section id="teamAnalysisSection">
+        <h3>Team Analysis - Areawise Wagon Wheel</h3>
+        
+        <div class="radar-container">
+            <!-- Our Team Radar -->
+            <div class="team-panel">
+                <h4>Our Team</h4>
+                <img id="ourTeamRadar" src="" alt="Our Team Radar" class="radar-img" />
+                
+                <!-- Filters for Our Team -->
+                <div class="filter-panel">
+                    <div class="filter-section">
+                        <span class="filter-title">Filter by Runs:</span>
+                        <div class="filter-options">
+                            <label>
+                                <input type="checkbox" class="ourTeamRunFilter" value="1" checked /> 1s
+                            </label>
+                            <label>
+                                <input type="checkbox" class="ourTeamRunFilter" value="2" checked /> 2s
+                            </label>
+                            <label>
+                                <input type="checkbox" class="ourTeamRunFilter" value="3" checked /> 3s
+                            </label>
+                            <label>
+                                <input type="checkbox" class="ourTeamRunFilter" value="4" checked /> 4s
+                            </label>
+                            <label>
+                                <input type="checkbox" class="ourTeamRunFilter" value="6" checked /> 6s
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <span class="filter-title">Filter by Bowler Type:</span>
+                        <div class="filter-options">
+                            <label>
+                                <input type="checkbox" class="ourTeamBowlerFilter" value="Pace" checked /> Pace
+                            </label>
+                            <label>
+                                <input type="checkbox" class="ourTeamBowlerFilter" value="Spin" checked /> Spin
+                            </label>
+                            <label>
+                                <input type="checkbox" class="ourTeamBowlerFilter" value="Other" checked /> Other
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button id="applyOurTeamFilters">Apply Filters</button>
+                </div>
+            </div>
+            
+            <!-- Opponent Team Radar -->
+            <div class="team-panel">
+                <h4>Opponent Team</h4>
+                <img id="opponentTeamRadar" src="" alt="Opponent Team Radar" class="radar-img" />
+                
+                <!-- Filters for Opponent Team -->
+                <div class="filter-panel">
+                    <div class="filter-section">
+                        <span class="filter-title">Filter by Runs:</span>
+                        <div class="filter-options">
+                            <label>
+                                <input type="checkbox" class="opponentTeamRunFilter" value="1" checked /> 1s
+                            </label>
+                            <label>
+                                <input type="checkbox" class="opponentTeamRunFilter" value="2" checked /> 2s
+                            </label>
+                            <label>
+                                <input type="checkbox" class="opponentTeamRunFilter" value="3" checked /> 3s
+                            </label>
+                            <label>
+                                <input type="checkbox" class="opponentTeamRunFilter" value="4" checked /> 4s
+                            </label>
+                            <label>
+                                <input type="checkbox" class="opponentTeamRunFilter" value="6" checked /> 6s
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <span class="filter-title">Filter by Bowler Type:</span>
+                        <div class="filter-options">
+                            <label>
+                                <input type="checkbox" class="opponentTeamBowlerFilter" value="Pace" checked /> Pace
+                            </label>
+                            <label>
+                                <input type="checkbox" class="opponentTeamBowlerFilter" value="Spin" checked /> Spin
+                            </label>
+                            <label>
+                                <input type="checkbox" class="opponentTeamBowlerFilter" value="Other" checked /> Other
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button id="applyOpponentTeamFilters">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <script>
+        // Team Analysis functionality
+        const ourTeamRadar = document.getElementById('ourTeamRadar');
+        const opponentTeamRadar = document.getElementById('opponentTeamRadar');
+        const applyOurTeamFiltersBtn = document.getElementById('applyOurTeamFilters');
+        const applyOpponentTeamFiltersBtn = document.getElementById('applyOpponentTeamFilters');
+        
+        // Function to get selected filters
+        function getSelectedFilters(filterClass) {
+            const checkboxes = document.querySelectorAll(`.${filterClass}:checked`);
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+        
+        // Function to load radar charts
+        function loadTeamRadarCharts(teamType) {
+            const runFilters = getSelectedFilters(`${teamType}TeamRunFilter`);
+            const bowlerFilters = getSelectedFilters(`${teamType}TeamBowlerFilter`);
+            
+            fetch('/api/team_radar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    team_type: teamType,
+                    run_filters: runFilters,
+                    bowler_filters: bowlerFilters
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (teamType === 'our') {
+                        ourTeamRadar.src = data.radar_image;
+                    } else {
+                        opponentTeamRadar.src = data.radar_image;
+                    }
+                } else {
+                    console.error('Failed to load radar:', data.message);
+                }
+            })
+            .catch(err => {
+                console.error('Error loading radar:', err);
+            });
+        }
+        
+        // Apply filters for our team
+        applyOurTeamFiltersBtn.addEventListener('click', () => {
+            loadTeamRadarCharts('our');
+        });
+        
+        // Apply filters for opponent team
+        applyOpponentTeamFiltersBtn.addEventListener('click', () => {
+            loadTeamRadarCharts('opponent');
+        });
+        
+        // Load charts on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTeamRadarCharts('our');
+            loadTeamRadarCharts('opponent');
+        });
+    </script>
+</body>
+</html>
