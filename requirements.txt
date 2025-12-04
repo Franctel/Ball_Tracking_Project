@@ -7,4 +7,6 @@ scipy --only-binary=:all:
 requests
 gunicorn
 ffmpeg-python
+matplotlib
+pandas
 
